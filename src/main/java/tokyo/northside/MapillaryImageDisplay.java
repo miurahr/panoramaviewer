@@ -21,7 +21,7 @@ import javax.swing.JComponent;
 
 /**
  * This object is a responsible JComponent which lets you zoom and drag. It is
- * included in a {@link MainDialog} object.
+ * included in a object.
  *
  * @author nokutu
  * @see MapillaryImageDisplay
@@ -129,21 +129,6 @@ public class MapillaryImageDisplay extends JComponent {
         visibleRect = MapillaryImageDisplay.this.visibleRect;
       }
       if (image != null && Math.min(getSize().getWidth(), getSize().getHeight()) > 0) {
-          if (!MapillaryImageDisplay.this.visibleRect.equals(new Rectangle(0, 0, image.getWidth(null), image.getHeight(null)))) {
-            // Zooms to 1:1
-            MapillaryImageDisplay.this.visibleRect = new Rectangle(0, 0,
-                image.getWidth(null), image.getHeight(null));
-          } else {
-            // Zooms to best fit.
-            MapillaryImageDisplay.this.visibleRect = new Rectangle(
-                0,
-                (image.getHeight(null) - (image.getWidth(null) * getHeight()) / getWidth()) / 2,
-                image.getWidth(null),
-                (image.getWidth(null) * getHeight()) / getWidth()
-            );
-          }
-          MapillaryImageDisplay.this.repaint();
-          return;
         // Calculate the translation to set the clicked point the center of
         // the view.
         Point click = comp2imgCoord(visibleRect, e.getX(), e.getY());
