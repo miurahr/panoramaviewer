@@ -24,10 +24,8 @@ public class Mapillary360 {
     private static final double INV_2PI = 1 / (2 * Math.PI);
     private double targetRotationX, targetRotationY;
     private double currentRotationX, currentRotationY;
-    private int mouseX, mouseY;
 
     public Mapillary360() {
-        mouseX = mouseY = 0;
         offscreenImage = new BufferedImage(800, 600, BufferedImage.TYPE_3BYTE_BGR);
         cameraPlaneDistance = (offscreenImage.getWidth() / 2) / Math.tan(FOV / 2);
         createRayVecs();
@@ -49,6 +47,8 @@ public class Mapillary360 {
             frame.setResizable(false);
             frame.setVisible(true);
             mapillaryImageDisplay.requestFocus();
+
+            setMouse(100, 160);
             draw(mapillaryImageDisplay);
         } catch (IOException e){
 
@@ -91,11 +91,14 @@ public class Mapillary360 {
         }).start();
     }
 
+     public void setMouse(int mouseX, int mouseY) {
+         targetRotationX = (mouseY - (offscreenImage.getHeight() / 2)) * 0.025;
+         targetRotationY = (mouseX - (offscreenImage.getWidth() / 2)) * 0.025;
+         currentRotationX += (targetRotationX - currentRotationX) * 0.25;
+         currentRotationY += (targetRotationY - currentRotationY) * 0.25;
+     }
+
      private void draw(MapillaryImageDisplay g) {
-        targetRotationX = (mouseY - (offscreenImage.getHeight() / 2)) * 0.025;
-        targetRotationY = (mouseX - (offscreenImage.getWidth() / 2)) * 0.025;
-        currentRotationX += (targetRotationX - currentRotationX) * 0.25;
-        currentRotationY += (targetRotationY - currentRotationY) * 0.25;
         double sinRotationX = Math.sin(currentRotationX);
         double cosRotationX = Math.cos(currentRotationX);
         double sinRotationY = Math.sin(currentRotationY);
