@@ -2,10 +2,8 @@ package tokyo.northside;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
-import java.awt.image.DataBufferInt;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,10 +11,8 @@ import java.util.List;
 
 public class Mapillary360 {
     private static final List<ImageDetection> detections = Collections.synchronizedList(new ArrayList<>());
-    private static BufferedImage sphereImage;
+    private BufferedImage sphereImage;
     private final BufferedImage offscreenImage;
-    private int[] sphereImageBuffer;
-    private final int[] offscreenImageBuffer;
     private static final double FOV = Math.toRadians(110);
     private final double cameraPlaneDistance;
     private double rayVecs[][][];
@@ -31,8 +27,8 @@ public class Mapillary360 {
     private int mouseX, mouseY;
 
     public Mapillary360() {
-        offscreenImage = new BufferedImage(800, 600, BufferedImage.TYPE_INT_RGB);
-        offscreenImageBuffer = ((DataBufferInt) offscreenImage.getRaster().getDataBuffer()).getData();
+        mouseX = mouseY = 0;
+        offscreenImage = new BufferedImage(800, 600, BufferedImage.TYPE_3BYTE_BGR);
         cameraPlaneDistance = (offscreenImage.getWidth() / 2) / Math.tan(FOV / 2);
         createRayVecs();
         precalculateAsinAtan2();
@@ -53,7 +49,7 @@ public class Mapillary360 {
             frame.setResizable(false);
             frame.setVisible(true);
             mapillaryImageDisplay.requestFocus();
-            mapillaryImageDisplay.setImage(sphereImage, detections);
+            draw(mapillaryImageDisplay);
         } catch (IOException e){
 
         }
@@ -95,7 +91,7 @@ public class Mapillary360 {
         }).start();
     }
 
-     private void draw(Graphics2D g) {
+     private void draw(MapillaryImageDisplay g) {
         targetRotationX = (mouseY - (offscreenImage.getHeight() / 2)) * 0.025;
         targetRotationY = (mouseX - (offscreenImage.getWidth() / 2)) * 0.025;
         currentRotationX += (targetRotationX - currentRotationX) * 0.25;
@@ -128,11 +124,19 @@ public class Mapillary360 {
                 double v = 0.5 - (asinTable[iY] * INV_PI);
                 int tx = (int) (sphereImage.getWidth() * u);
                 int ty = (int) (sphereImage.getHeight() * (1 - v));
-                int color = sphereImageBuffer[ty * sphereImage.getWidth() + tx];
-                offscreenImageBuffer[y * offscreenImage.getWidth() + x] = color;
+
+                if(tx >= sphereImage.getWidth()) {
+                    tx = sphereImage.getWidth()-1;
+                }
+                if(ty >= sphereImage.getHeight()) {
+                    ty = sphereImage.getHeight()-1;
+                }
+
+                int color = sphereImage.getRGB(tx, ty);
+                offscreenImage.setRGB(x, y, color);
             }
         }
-        g.drawImage(offscreenImage, 0, 0, sphereImage.getWidth(), sphereImage.getHeight(), null);
+        g.setImage(offscreenImage, detections);
     }
 
     public static void main(String[] args) {
