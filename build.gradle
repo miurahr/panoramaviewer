@@ -8,5 +8,5 @@ repositories {
     jcenter()
 }
 
-mainClassName = 'tokyo.northside.Mapillary360'
+mainClassName = 'tokyo.northside.MapillaryMainDialogStub'
 
