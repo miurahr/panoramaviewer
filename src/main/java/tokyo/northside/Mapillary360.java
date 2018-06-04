@@ -22,7 +22,6 @@ public class Mapillary360 {
     private double[] atan2Table;
     private static final double INV_PI = 1 / Math.PI;
     private static final double INV_2PI = 1 / (2 * Math.PI);
-    private double targetRotationX, targetRotationY;
     private double currentRotationX, currentRotationY;
 
     public Mapillary360() {
@@ -92,8 +91,8 @@ public class Mapillary360 {
     }
 
      public void setMouse(int mouseX, int mouseY) {
-         targetRotationX = (mouseY - (offscreenImage.getHeight() / 2)) * 0.025;
-         targetRotationY = (mouseX - (offscreenImage.getWidth() / 2)) * 0.025;
+         double targetRotationX = (mouseY - (offscreenImage.getHeight() / 2)) * 0.025;
+         double targetRotationY = (mouseX - (offscreenImage.getWidth() / 2)) * 0.025;
          currentRotationX += (targetRotationX - currentRotationX) * 0.25;
          currentRotationY += (targetRotationY - currentRotationY) * 0.25;
      }

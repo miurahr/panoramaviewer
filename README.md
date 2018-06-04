@@ -1,5 +1,5 @@
-JOSM Mapillary plugin PoC project for 3dview
-============================================
+JOSM Mapillary plugin PoC for 360 degree photo viewer
+=====================================================
 
 This repository has a toy program for PoC(Proof of concept).
 
@@ -13,6 +13,12 @@ JOSM mapillary plugin.
 
 LICENSE
 -------
+
+Some portions are come from
+https://github.com/leonardo-ono/Java3DSphereImageViewer
+
+
+Many portions are come from
 
 The Mapillary plugin for JOSM – view and edit Mapillary images with the OpenStreetMap editor JOSM
 Copyright (C) 2016 Jorge López Fueyo
