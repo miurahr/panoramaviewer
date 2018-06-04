@@ -8,5 +8,5 @@ repositories {
     jcenter()
 }
 
-mainClassName = 'tokyo.northside.Main'
+mainClassName = 'tokyo.northside.Mapillary360'
 

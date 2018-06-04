@@ -1,38 +1,26 @@
 package tokyo.northside;
 
-import java.awt.Canvas;
-import java.awt.Graphics2D;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
-import java.awt.image.BufferStrategy;
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferInt;
-import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
+import java.awt.image.DataBufferInt;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-/**
- * Java 360 Sphere Image Viewer.
- * 
- * Resources:
- * factory image: https://i.ytimg.com/vi/Ifis9sSyPSY/maxresdefault.jpg
- * park image: http://www.mediavr.com/belmorepark1left.jpg
- * 
- * @author Leonardo Ono (ono.leo@gmail.com)
- */
-public class Mapillary3DView extends Canvas implements MouseMotionListener {
-
-    private BufferedImage sphereImage;
+public class Mapillary360 {
+    private static final List<ImageDetection> detections = Collections.synchronizedList(new ArrayList<>());
+    private static BufferedImage sphereImage;
     private final BufferedImage offscreenImage;
     private int[] sphereImageBuffer;
     private final int[] offscreenImageBuffer;
     private static final double FOV = Math.toRadians(110);
     private final double cameraPlaneDistance;
     private double rayVecs[][][];
-    private static final double ACCURACY_FACTOR = 2048; 
+    private static final double ACCURACY_FACTOR = 2048;
     private static final int REQUIRED_SIZE = (int) (2 * ACCURACY_FACTOR);
     private double[] asinTable;
     private double[] atan2Table;
@@ -41,26 +29,36 @@ public class Mapillary3DView extends Canvas implements MouseMotionListener {
     private double targetRotationX, targetRotationY;
     private double currentRotationX, currentRotationY;
     private int mouseX, mouseY;
-    private BufferStrategy bs;
 
-    public Mapillary3DView() {
-        try {
-            BufferedImage sphereTmpImage = ImageIO.read(getClass().getResourceAsStream("/res/factory.jpg"));
-            sphereImage = new BufferedImage(sphereTmpImage.getWidth(), sphereTmpImage.getHeight(), BufferedImage.TYPE_INT_RGB);
-            sphereImage.getGraphics().drawImage(sphereTmpImage, 0, 0, null);
-            sphereImageBuffer = ((DataBufferInt) sphereImage.getRaster().getDataBuffer()).getData();
-        } catch (IOException ex) {
-            Logger.getLogger(Mapillary3DView.class.getName()).log(Level.SEVERE, null, ex);
-            System.exit(-1);
-        }
+    public Mapillary360() {
         offscreenImage = new BufferedImage(800, 600, BufferedImage.TYPE_INT_RGB);
         offscreenImageBuffer = ((DataBufferInt) offscreenImage.getRaster().getDataBuffer()).getData();
         cameraPlaneDistance = (offscreenImage.getWidth() / 2) / Math.tan(FOV / 2);
         createRayVecs();
         precalculateAsinAtan2();
-        addMouseMotionListener(this);
+
+        JFrame frame = new JFrame();
+        frame.setTitle("Java 360 Sphere Image Viewer");
+        frame.setSize(800, 600);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLocationRelativeTo(null);
+
+        try {
+            MapillaryImageDisplay mapillaryImageDisplay = new MapillaryImageDisplay();
+            sphereImage = ImageIO.read(getClass().getResourceAsStream("360photo.jpg"));
+            if (sphereImage == null) {
+                return;
+            }
+            frame.getContentPane().add(mapillaryImageDisplay);
+            frame.setResizable(false);
+            frame.setVisible(true);
+            mapillaryImageDisplay.requestFocus();
+            mapillaryImageDisplay.setImage(sphereImage, detections);
+        } catch (IOException e){
+
+        }
     }
-    
+
     private void createRayVecs() {
         rayVecs = new double[offscreenImage.getWidth()][offscreenImage.getHeight()][3]; // x, y, z
         for (int y = 0; y < offscreenImage.getHeight(); y++) {
@@ -75,7 +73,7 @@ public class Mapillary3DView extends Canvas implements MouseMotionListener {
             }
         }
     }
-    
+
     private void precalculateAsinAtan2() {
         asinTable = new double[REQUIRED_SIZE];
         atan2Table = new double[REQUIRED_SIZE * REQUIRED_SIZE];
@@ -90,23 +88,14 @@ public class Mapillary3DView extends Canvas implements MouseMotionListener {
     }
 
     public void start() {
-        createBufferStrategy(2);
-        bs = getBufferStrategy();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                boolean running = true;
-                while (running) {
-                    Graphics2D g = (Graphics2D) bs.getDrawGraphics();
-                    draw(g);
-                    g.dispose();
-                    bs.show();
-                }
+        new Thread(() -> {
+            boolean running = true;
+            while (running) {
             }
         }).start();
     }
-    
-    private void draw(Graphics2D g) {
+
+     private void draw(Graphics2D g) {
         targetRotationX = (mouseY - (offscreenImage.getHeight() / 2)) * 0.025;
         targetRotationY = (mouseX - (offscreenImage.getWidth() / 2)) * 0.025;
         currentRotationX += (targetRotationX - currentRotationX) * 0.25;
@@ -131,7 +120,7 @@ public class Mapillary3DView extends Canvas implements MouseMotionListener {
                 tmpVecX = vecZ * sinRotationY + vecX * cosRotationY;
                 vecZ = tmpVecZ;
                 vecX = tmpVecX;
-                int iX = (int) ((vecX + 1) * ACCURACY_FACTOR); 
+                int iX = (int) ((vecX + 1) * ACCURACY_FACTOR);
                 int iY = (int) ((vecY + 1) * ACCURACY_FACTOR);
                 int iZ = (int) ((vecZ + 1) * ACCURACY_FACTOR);
                 // https://en.wikipedia.org/wiki/UV_mapping
@@ -139,41 +128,19 @@ public class Mapillary3DView extends Canvas implements MouseMotionListener {
                 double v = 0.5 - (asinTable[iY] * INV_PI);
                 int tx = (int) (sphereImage.getWidth() * u);
                 int ty = (int) (sphereImage.getHeight() * (1 - v));
-                int color = sphereImageBuffer[ty * sphereImage.getWidth() + tx]; 
+                int color = sphereImageBuffer[ty * sphereImage.getWidth() + tx];
                 offscreenImageBuffer[y * offscreenImage.getWidth() + x] = color;
             }
         }
-        g.drawImage(offscreenImage, 0, 0, getWidth(), getHeight(), null);
-    }
-    
-    @Override
-    public void mouseDragged(MouseEvent e) {
-        // do nothing
+        g.drawImage(offscreenImage, 0, 0, sphereImage.getWidth(), sphereImage.getHeight(), null);
     }
 
-    @Override
-    public void mouseMoved(MouseEvent e) {
-        mouseX = e.getX();
-        mouseY = e.getY();
-    }
-    
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                Mapillary3DView view = new Mapillary3DView();
-                JFrame frame = new JFrame();
-                frame.setTitle("Java 360 Sphere Image Viewer");
-                frame.setSize(800, 600);
-                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                frame.setLocationRelativeTo(null);
-                frame.getContentPane().add(view);
-                frame.setResizable(false);
-                frame.setVisible(true);
-                view.requestFocus();
-                view.start();
+               new Mapillary360();
             }
         });
-    }    
-    
+    }
 }
