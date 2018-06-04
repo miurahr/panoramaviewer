@@ -5,26 +5,30 @@ import javax.swing.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
-import static java.lang.Thread.sleep;
 
-public class MapillaryMainDialogStub {
+public class MapillaryMainDialogStub extends JFrame {
   private static MapillaryMainDialogStub instance;
   /**
    * Object containing the shown image and that handles zoom and drag
    */
-  public final Mapillary360ImageDisplay mapillary360ImageDisplay;
   public final MapillaryImageDisplay mapillaryImageDisplay;
+  /**
+   * Object containing whole sphere image and handles view port
+   */
+  public final Mapillary360ImageDisplay mapillary360ImageDisplay;
 
+  /**
+   *  Initialize gui parts and prepare Mapillary360ImageDisplay instance
+   */
   private MapillaryMainDialogStub() {
-    JFrame frame = new JFrame();
-    frame.setTitle("Java 360 Sphere Image Viewer");
-    frame.setSize(800, 600);
-    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    frame.setLocationRelativeTo(null);
+    this.setTitle("Java 360 Sphere Image Viewer");
+    this.setSize(800, 600);
+    this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    this.setLocationRelativeTo(null);
     mapillaryImageDisplay = new MapillaryImageDisplay();
-    frame.getContentPane().add(mapillaryImageDisplay);
-    frame.setResizable(false);
-    frame.setVisible(true);
+    this.getContentPane().add(mapillaryImageDisplay);
+    this.setResizable(false);
+    this.setVisible(true);
     mapillary360ImageDisplay = new Mapillary360ImageDisplay(mapillaryImageDisplay);
     mapillaryImageDisplay.requestFocus();
   }
@@ -55,7 +59,7 @@ public class MapillaryMainDialogStub {
     } catch (IOException e) {
 
     }
-    mapillary360ImageDisplay.setMouse(100, 160);
+    mapillary360ImageDisplay.setMouse(30, 160);
     mapillary360ImageDisplay.draw();
   }
 
