@@ -1,3 +1,5 @@
 build
 .idea/workspace.xml
 *.iml
+.gradle/
+
