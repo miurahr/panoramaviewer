@@ -14,10 +14,8 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 import java.util.Collection;
 
-import javax.swing.JComponent;
 
 /**
  * This object is a responsible JComponent which lets you zoom and drag. It is
@@ -26,14 +24,9 @@ import javax.swing.JComponent;
  * @author nokutu
  * @see MapillaryImageDisplay
  */
-public class MapillaryImageDisplay extends JComponent {
+public class MapillaryImageDisplay extends AbstractMapillaryImageDisplay {
 
   private static final long serialVersionUID = 3369727203329307716L;
-
-  private final Collection<ImageDetection> detections = new ArrayList<>();
-
-  /** The image currently displayed */
-  private volatile BufferedImage image;
 
   /**
    * The rectangle (in image coordinates) of the image that is visible. This

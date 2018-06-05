@@ -3,10 +3,7 @@ package tokyo.northside;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 
 
 public class MapillaryMainDialogStub extends JFrame {
@@ -30,12 +27,8 @@ public class MapillaryMainDialogStub extends JFrame {
     this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     this.setLocationRelativeTo(null);
     mapillaryImageDisplay = new MapillaryImageDisplay();
-    this.getContentPane().add(mapillaryImageDisplay);
-    this.setResizable(false);
-    this.setVisible(true);
     mapillary360ImageDetector = new Mapillary360ImageDetector();
-    mapillary360ImageDisplay = new Mapillary360ImageDisplay(mapillaryImageDisplay);
-    mapillaryImageDisplay.requestFocus();
+    mapillary360ImageDisplay = new Mapillary360ImageDisplay();
   }
 
   /**
@@ -50,25 +43,37 @@ public class MapillaryMainDialogStub extends JFrame {
   }
 
   public void loadingFinished() {
-    String imageFileName = "360photo.jpg";
-    boolean res = mapillary360ImageDetector.check(getClass().getResourceAsStream(imageFileName));
-    if (res) {
-      try {
-        BufferedImage img = ImageIO.read(getClass().getResourceAsStream(imageFileName));
-        if (img == null) {
-          return;
-        }
-        if (
-          mapillary360ImageDisplay.getImage() == null
-                        || img.getHeight() > this.mapillary360ImageDisplay.getImage().getHeight()
-        ) {
-          this.mapillary360ImageDisplay.setImage(img);
-        }
-      } catch(IOException e){
+    BufferedImage img;
 
+    String imageFileName = "360photo.jpg";
+
+    boolean res = mapillary360ImageDetector.check(getClass().getResourceAsStream(imageFileName));
+      try {
+        img = ImageIO.read(getClass().getResourceAsStream(imageFileName));
+      } catch (IOException e) {
+        img = null;
       }
-      mapillary360ImageDisplay.setViewPoint(30, 160);
-      mapillary360ImageDisplay.draw();
+      if (img == null) {
+        return;
+      }
+    if (res) {
+      this.getContentPane().add(mapillary360ImageDisplay);
+      this.setResizable(false);
+      this.setVisible(true);
+      mapillary360ImageDisplay.requestFocus();
+      if (
+              mapillary360ImageDisplay.getImage() == null
+                      || img.getHeight() > this.mapillary360ImageDisplay.getImage().getHeight()
+              ) {
+        mapillary360ImageDisplay.setImage(img, null);
+        mapillary360ImageDisplay.setViewPoint(30, 160);
+      }
+    } else {
+      this.getContentPane().add(mapillaryImageDisplay);
+      this.setResizable(false);
+      this.setVisible(true);
+      mapillaryImageDisplay.setImage(img, null);
+      mapillaryImageDisplay.requestFocus();
     }
   }
 

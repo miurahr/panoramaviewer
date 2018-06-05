@@ -1,9 +1,10 @@
 package tokyo.northside;
 
+import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
-public class Mapillary360ImageDisplay {
-    private BufferedImage sphereImage;
+public class Mapillary360ImageDisplay extends AbstractMapillaryImageDisplay {
     private final BufferedImage offscreenImage;
     private static final double FOV = Math.toRadians(110);
     private final double cameraPlaneDistance;
@@ -16,22 +17,11 @@ public class Mapillary360ImageDisplay {
     private static final double INV_2PI = 1 / (2 * Math.PI);
     private double currentRotationX, currentRotationY;
 
-    private MapillaryImageDisplay mapillaryImageDisplay;
-
-    public Mapillary360ImageDisplay(MapillaryImageDisplay display) {
-        this.mapillaryImageDisplay = display;
+    public Mapillary360ImageDisplay() {
         offscreenImage = new BufferedImage(800, 600, BufferedImage.TYPE_3BYTE_BGR);
         cameraPlaneDistance = (offscreenImage.getWidth() / 2) / Math.tan(FOV / 2);
         createRayVecs();
         precalculateAsinAtan2();
-    }
-
-    public BufferedImage getImage() {
-        return this.offscreenImage;
-    }
-
-    public void setImage(BufferedImage img) {
-        sphereImage = img;
     }
 
     private void createRayVecs() {
@@ -69,7 +59,7 @@ public class Mapillary360ImageDisplay {
          currentRotationY += (targetRotationY - currentRotationY) * 0.25;
      }
 
-     public void draw() {
+     public void redrawOffscreenImage() {
         double sinRotationX = Math.sin(currentRotationX);
         double cosRotationX = Math.cos(currentRotationX);
         double sinRotationY = Math.sin(currentRotationY);
@@ -96,20 +86,43 @@ public class Mapillary360ImageDisplay {
                 // https://en.wikipedia.org/wiki/UV_mapping
                 double u = 0.5 + (atan2Table[iZ + iX * REQUIRED_SIZE] * INV_2PI);
                 double v = 0.5 - (asinTable[iY] * INV_PI);
-                int tx = (int) (sphereImage.getWidth() * u);
-                int ty = (int) (sphereImage.getHeight() * (1 - v));
+                int tx = (int) (image.getWidth() * u);
+                int ty = (int) (image.getHeight() * (1 - v));
 
-                if(tx >= sphereImage.getWidth()) {
-                    tx = sphereImage.getWidth()-1;
+                if(tx >= image.getWidth()) {
+                    tx = image.getWidth()-1;
                 }
-                if(ty >= sphereImage.getHeight()) {
-                    ty = sphereImage.getHeight()-1;
+                if(ty >= image.getHeight()) {
+                    ty = image.getHeight()-1;
                 }
 
-                int color = sphereImage.getRGB(tx, ty);
+                int color = image.getRGB(tx, ty);
                 offscreenImage.setRGB(x, y, color);
             }
         }
-        mapillaryImageDisplay.setImage(offscreenImage, null);
     }
+
+  /**
+   * Paints the visible part of the picture.
+   */
+  @Override
+  public void paintComponent(Graphics g) {
+    Image image;
+    synchronized (this) {
+      redrawOffscreenImage();
+      image = this.offscreenImage;
+    }
+    if (image == null) {
+      g.setColor(Color.black);
+      String noImageStr = "No image selected";
+      Rectangle2D noImageSize = g.getFontMetrics(g.getFont()).getStringBounds(
+          noImageStr, g);
+      Dimension size = getSize();
+      g.drawString(noImageStr,
+          (int) ((size.width - noImageSize.getWidth()) / 2),
+          (int) ((size.height - noImageSize.getHeight()) / 2));
+    } else {
+       g.drawImage(this.offscreenImage,0,0, null);
+    }
+  }
 }
