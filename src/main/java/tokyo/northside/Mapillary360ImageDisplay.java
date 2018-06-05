@@ -62,9 +62,9 @@ public class Mapillary360ImageDisplay {
         }
     }
 
-     public void setMouse(int mouseX, int mouseY) {
-         double targetRotationX = (mouseY - (offscreenImage.getHeight() / 2)) * 0.025;
-         double targetRotationY = (mouseX - (offscreenImage.getWidth() / 2)) * 0.025;
+     public void setViewPoint(int vx, int vy) {
+         double targetRotationX = (vy - (offscreenImage.getHeight() / 2)) * 0.025;
+         double targetRotationY = (vx - (offscreenImage.getWidth() / 2)) * 0.025;
          currentRotationX += (targetRotationX - currentRotationX) * 0.25;
          currentRotationY += (targetRotationY - currentRotationY) * 0.25;
      }
