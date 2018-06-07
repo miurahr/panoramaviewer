@@ -1,10 +1,21 @@
-package tokyo.northside;
+package tokyo.northside.mapillary;
+
+import com.adobe.xmp.XMPException;
+import com.adobe.xmp.XMPIterator;
+import com.adobe.xmp.XMPMeta;
+import com.adobe.xmp.properties.XMPPropertyInfo;
+import com.drew.imaging.ImageMetadataReader;
+import com.drew.imaging.ImageProcessingException;
+import com.drew.metadata.Metadata;
+import com.drew.metadata.xmp.XmpDirectory;
 
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.InputStream;
 
-public class Mapillary360ImageDisplay extends AbstractMapillaryImageDisplay {
+public class Mapillary360ImageDisplay extends MapillaryAbstractImageDisplay {
     private final BufferedImage offscreenImage;
     private static final double FOV = Math.toRadians(110);
     private final double cameraPlaneDistance;
@@ -16,6 +27,29 @@ public class Mapillary360ImageDisplay extends AbstractMapillaryImageDisplay {
     private static final double INV_PI = 1 / Math.PI;
     private static final double INV_2PI = 1 / (2 * Math.PI);
     private double currentRotationX, currentRotationY;
+
+    public static boolean is360Image(InputStream imageStream) {
+        try {
+            Metadata metadata = ImageMetadataReader.readMetadata(imageStream);
+            XmpDirectory xmpDirectory = metadata.getFirstDirectoryOfType(XmpDirectory.class);
+            XMPMeta xmpMeta = xmpDirectory.getXMPMeta();
+            XMPIterator itr = xmpMeta.iterator();
+            while (itr.hasNext()) {
+                XMPPropertyInfo pi = (XMPPropertyInfo) itr.next();
+                if (pi != null && pi.getPath() != null) {
+                    if ((pi.getPath().endsWith("ProjectionType"))) {
+                        String proj = pi.getValue();
+                        if (proj.equals("equirectangular")) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        } catch (NullPointerException | ImageProcessingException | IOException | XMPException e) {
+            // ignore
+        }
+        return false;
+    }
 
     public Mapillary360ImageDisplay() {
         offscreenImage = new BufferedImage(800, 600, BufferedImage.TYPE_3BYTE_BGR);
@@ -52,14 +86,14 @@ public class Mapillary360ImageDisplay extends AbstractMapillaryImageDisplay {
         }
     }
 
-     public void setViewPoint(int vx, int vy) {
-         double targetRotationX = (vy - (offscreenImage.getHeight() / 2)) * 0.025;
-         double targetRotationY = (vx - (offscreenImage.getWidth() / 2)) * 0.025;
-         currentRotationX += (targetRotationX - currentRotationX) * 0.25;
-         currentRotationY += (targetRotationY - currentRotationY) * 0.25;
-     }
+    public void setViewPoint(int vx, int vy) {
+        double targetRotationX = (vy - (offscreenImage.getHeight() / 2)) * 0.025;
+        double targetRotationY = (vx - (offscreenImage.getWidth() / 2)) * 0.025;
+        currentRotationX += (targetRotationX - currentRotationX) * 0.25;
+        currentRotationY += (targetRotationY - currentRotationY) * 0.25;
+    }
 
-     public void redrawOffscreenImage() {
+    public void redrawOffscreenImage() {
         double sinRotationX = Math.sin(currentRotationX);
         double cosRotationX = Math.cos(currentRotationX);
         double sinRotationY = Math.sin(currentRotationY);
@@ -89,11 +123,11 @@ public class Mapillary360ImageDisplay extends AbstractMapillaryImageDisplay {
                 int tx = (int) (image.getWidth() * u);
                 int ty = (int) (image.getHeight() * (1 - v));
 
-                if(tx >= image.getWidth()) {
-                    tx = image.getWidth()-1;
+                if (tx >= image.getWidth()) {
+                    tx = image.getWidth() - 1;
                 }
-                if(ty >= image.getHeight()) {
-                    ty = image.getHeight()-1;
+                if (ty >= image.getHeight()) {
+                    ty = image.getHeight() - 1;
                 }
 
                 int color = image.getRGB(tx, ty);
@@ -102,27 +136,28 @@ public class Mapillary360ImageDisplay extends AbstractMapillaryImageDisplay {
         }
     }
 
-  /**
-   * Paints the visible part of the picture.
-   */
-  @Override
-  public void paintComponent(Graphics g) {
-    Image image;
-    synchronized (this) {
-      redrawOffscreenImage();
-      image = this.offscreenImage;
+    /**
+     * Paints the visible part of the picture.
+     */
+    @Override
+    public void paintComponent(Graphics g) {
+        Image image;
+        synchronized (this) {
+            redrawOffscreenImage();
+            image = this.offscreenImage;
+        }
+        if (image == null) {
+            g.setColor(Color.black);
+            String noImageStr = "No image selected";
+            Rectangle2D noImageSize = g.getFontMetrics(g.getFont()).getStringBounds(
+                    noImageStr, g);
+            Dimension size = getSize();
+            g.drawString(noImageStr,
+                    (int) ((size.width - noImageSize.getWidth()) / 2),
+                    (int) ((size.height - noImageSize.getHeight()) / 2));
+        } else {
+            g.drawImage(this.offscreenImage, 0, 0, null);
+        }
     }
-    if (image == null) {
-      g.setColor(Color.black);
-      String noImageStr = "No image selected";
-      Rectangle2D noImageSize = g.getFontMetrics(g.getFont()).getStringBounds(
-          noImageStr, g);
-      Dimension size = getSize();
-      g.drawString(noImageStr,
-          (int) ((size.width - noImageSize.getWidth()) / 2),
-          (int) ((size.height - noImageSize.getHeight()) / 2));
-    } else {
-       g.drawImage(this.offscreenImage,0,0, null);
-    }
-  }
+
 }

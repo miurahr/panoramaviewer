@@ -1,4 +1,4 @@
-package tokyo.northside;
+package tokyo.northside.mapillary;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,7 +13,7 @@ import java.util.Collection;
  * @author nokutu
  * @see MapillaryImageDisplay
  */
-public abstract class AbstractMapillaryImageDisplay extends JComponent {
+public abstract class MapillaryAbstractImageDisplay extends JComponent {
 
   final Collection<ImageDetection> detections = new ArrayList<>();
 

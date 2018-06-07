@@ -1,5 +1,5 @@
 // License: GPL. For details, see LICENSE file.
-package tokyo.northside;
+package tokyo.northside.mapillary;
 
 /**
  * An object that is identified amongst objects of the same class by a {@link String} key.

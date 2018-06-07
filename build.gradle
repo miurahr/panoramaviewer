@@ -8,7 +8,7 @@ repositories {
     jcenter()
 }
 
-mainClassName = 'tokyo.northside.MapillaryMainDialogStub'
+mainClassName = 'tokyo.northside.mapillary.MapillaryMainDialogStub'
 
 dependencies {
     compile group: 'com.drewnoakes', name: 'metadata-extractor', version: '2.11.0'

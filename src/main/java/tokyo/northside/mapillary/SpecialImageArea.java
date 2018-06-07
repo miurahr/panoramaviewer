@@ -1,5 +1,5 @@
 // License: GPL. For details, see LICENSE file.
-package tokyo.northside;
+package tokyo.northside.mapillary;
 
 import java.awt.geom.Path2D;
 

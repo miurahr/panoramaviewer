@@ -1,5 +1,5 @@
 // License: GPL. For details, see LICENSE file.
-package tokyo.northside;
+package tokyo.northside.mapillary;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -24,7 +24,7 @@ import java.util.Collection;
  * @author nokutu
  * @see MapillaryImageDisplay
  */
-public class MapillaryImageDisplay extends AbstractMapillaryImageDisplay {
+public class MapillaryImageDisplay extends MapillaryAbstractImageDisplay {
 
   private static final long serialVersionUID = 3369727203329307716L;
 
