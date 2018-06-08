@@ -9,14 +9,29 @@ import com.drew.imaging.ImageProcessingException;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.xmp.XmpDirectory;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 
 public class Mapillary360ImageDisplay extends MapillaryAbstractImageDisplay {
     private final BufferedImage offscreenImage;
+    private final int offscreenSizeX = 800;
+    private final int offscreenSizeY = 600;
+    private Rectangle viewRect;
     private static final double FOV = Math.toRadians(110);
     private final double cameraPlaneDistance;
     private double rayVecs[][][];
@@ -26,9 +41,9 @@ public class Mapillary360ImageDisplay extends MapillaryAbstractImageDisplay {
     private double[] atan2Table;
     private static final double INV_PI = 1 / Math.PI;
     private static final double INV_2PI = 1 / (2 * Math.PI);
-    private double currentRotationX, currentRotationY;
+    private double currentPsi, currentTheta;
 
-    public static boolean is360Image(InputStream imageStream) {
+    static boolean is360Image(InputStream imageStream) {
         try {
             Metadata metadata = ImageMetadataReader.readMetadata(imageStream);
             XmpDirectory xmpDirectory = metadata.getFirstDirectoryOfType(XmpDirectory.class);
@@ -51,8 +66,99 @@ public class Mapillary360ImageDisplay extends MapillaryAbstractImageDisplay {
         return false;
     }
 
+    private class ImageDisplayMouseListener implements MouseListener, MouseWheelListener, MouseMotionListener {
+        private long lastTimeForMousePoint;
+
+        @Override
+        public void mouseWheelMoved(MouseWheelEvent e) {
+            Image image;
+            Rectangle visibleRect;
+
+            synchronized (Mapillary360ImageDisplay.this) {
+                image = getImage();
+            }
+            if (image != null) {
+                if (e.getWhen() - this.lastTimeForMousePoint > 1500) {
+                    this.lastTimeForMousePoint = e.getWhen();
+                }
+
+                // Set the zoom to the visible rectangle in image coordinates
+                // FIXME: implement me
+                if (e.getWheelRotation() > 0) {
+                    // increment zoom, should keep xy ratio
+                    visibleRect = new Rectangle(200,150,600,450);
+                } else {
+                    // decrement zoom
+                    visibleRect = new Rectangle(0, 0, 800,600);
+                }
+                synchronized (Mapillary360ImageDisplay.this) {
+                    Mapillary360ImageDisplay.this.viewRect = visibleRect;
+                }
+                Mapillary360ImageDisplay.this.repaint();
+            }
+        }
+
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            // Move the center to the clicked point.
+            Image image;
+            Rectangle visibleRect;
+            synchronized (Mapillary360ImageDisplay.this) {
+                image = getImage();
+                visibleRect = Mapillary360ImageDisplay.this.viewRect;
+            }
+            if (image != null) {
+                // Calculate the translation to set the clicked point the center of
+                // the view.
+                Point click = comp2imgCoord(visibleRect, e.getX(), e.getY());
+                Point center = new Point(offscreenImage.getWidth() / 2, offscreenImage.getHeight() / 2);
+
+                // FIXME: should convert clicked point to rotationXY correctly.
+                double deltaTheta = (double)(click.x - center.x) * (1.0 / (offscreenSizeX / 2) * 10);
+                double deltaPsi = (double)(click.y - center.y) * ( 1.0 / (offscreenSizeY / 2) * 10);
+                currentTheta += (deltaTheta - currentTheta) * 0.25;
+                currentPsi += (deltaPsi - currentPsi)  * 0.25;
+                Mapillary360ImageDisplay.this.repaint();
+            }
+        }
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+        }
+
+        @Override
+        public void mouseDragged(MouseEvent e) {
+
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent e) {
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+        }
+
+        @Override
+        public void mouseMoved(MouseEvent e) {
+        }
+
+    }
+
     public Mapillary360ImageDisplay() {
-        offscreenImage = new BufferedImage(800, 600, BufferedImage.TYPE_3BYTE_BGR);
+        ImageDisplayMouseListener mouseListener = new ImageDisplayMouseListener();
+        addMouseListener(mouseListener);
+        addMouseWheelListener(mouseListener);
+        addMouseMotionListener(mouseListener);
+
+        offscreenImage = new BufferedImage(offscreenSizeX, offscreenSizeY, BufferedImage.TYPE_3BYTE_BGR);
+
+        viewRect = new Rectangle(0, 0, offscreenImage.getWidth(), offscreenImage.getHeight());
         cameraPlaneDistance = (offscreenImage.getWidth() / 2) / Math.tan(FOV / 2);
         createRayVecs();
         precalculateAsinAtan2();
@@ -86,18 +192,33 @@ public class Mapillary360ImageDisplay extends MapillaryAbstractImageDisplay {
         }
     }
 
-    public void setViewPoint(int vx, int vy) {
-        double targetRotationX = (vy - (offscreenImage.getHeight() / 2)) * 0.025;
-        double targetRotationY = (vx - (offscreenImage.getWidth() / 2)) * 0.025;
-        currentRotationX += (targetRotationX - currentRotationX) * 0.25;
-        currentRotationY += (targetRotationY - currentRotationY) * 0.25;
+    /**
+     * Sets a new picture to be displayed.
+     *
+     * @param image The picture to be displayed.
+     * @param detections image detections
+     */
+    @Override
+    public void setImage(BufferedImage image, Collection<ImageDetection> detections) {
+        synchronized (this) {
+            this.image = image;
+            this.detections.clear();
+            if (detections != null) {
+                this.detections.addAll(detections);
+            }
+            if (image != null) {
+                // reset view size
+                this.viewRect = new Rectangle(0, 0, offscreenImage.getWidth(), offscreenImage.getHeight());
+            }
+        }
+        repaint();
     }
 
-    public void redrawOffscreenImage() {
-        double sinRotationX = Math.sin(currentRotationX);
-        double cosRotationX = Math.cos(currentRotationX);
-        double sinRotationY = Math.sin(currentRotationY);
-        double cosRotationY = Math.cos(currentRotationY);
+    private void redrawOffscreenImage(BufferedImage image) {
+        double sinRotationX = Math.sin(currentPsi);
+        double cosRotationX = Math.cos(currentPsi);
+        double sinRotationY = Math.sin(currentTheta);
+        double cosRotationY = Math.cos(currentTheta);
         double tmpVecX, tmpVecY, tmpVecZ;
         for (int y = 0; y < offscreenImage.getHeight(); y++) {
             for (int x = 0; x < offscreenImage.getWidth(); x++) {
@@ -141,10 +262,9 @@ public class Mapillary360ImageDisplay extends MapillaryAbstractImageDisplay {
      */
     @Override
     public void paintComponent(Graphics g) {
-        Image image;
+        BufferedImage image;
         synchronized (this) {
-            redrawOffscreenImage();
-            image = this.offscreenImage;
+            image = this.image;
         }
         if (image == null) {
             g.setColor(Color.black);
@@ -156,7 +276,13 @@ public class Mapillary360ImageDisplay extends MapillaryAbstractImageDisplay {
                     (int) ((size.width - noImageSize.getWidth()) / 2),
                     (int) ((size.height - noImageSize.getHeight()) / 2));
         } else {
-            g.drawImage(this.offscreenImage, 0, 0, null);
+            synchronized (this) {
+                redrawOffscreenImage(image);
+            }
+            g.drawImage(offscreenImage, 0, 0, offscreenImage.getWidth(null),
+                    offscreenImage.getHeight(null),
+                    viewRect.x, viewRect.y, viewRect.x
+                    + viewRect.width, viewRect.y + viewRect.height, null);
         }
     }
 
