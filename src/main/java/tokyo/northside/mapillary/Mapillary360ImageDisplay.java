@@ -241,7 +241,7 @@ public class Mapillary360ImageDisplay extends MapillaryAbstractImageDisplay {
                 // https://en.wikipedia.org/wiki/UV_mapping
                 double u = 0.5 + (atan2Table[iZ + iX * REQUIRED_SIZE] * INV_2PI);
                 double v = 0.5 - (asinTable[iY] * INV_PI);
-                int tx = (int) (image.getWidth() * u);
+                int tx = (int) (image.getWidth() * (1 - u));
                 int ty = (int) (image.getHeight() * (1 - v));
 
                 if (tx >= image.getWidth()) {
