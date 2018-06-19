@@ -57,7 +57,7 @@ public class MapillaryMainDialogStub extends JFrame {
           return;
         }
         if(Mapillary360ImageDisplay.is360Image(getClass().getResourceAsStream(imageFileName))) {
-          mapillaryImageDisplay = new Mapillary360ImageDisplay();
+          mapillaryImageDisplay = new Mapillary360ImageDisplay(this.getWidth(),this.getHeight());
         } else {
           mapillaryImageDisplay = new MapillaryImageDisplay();
         }

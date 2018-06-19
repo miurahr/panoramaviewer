@@ -26,22 +26,12 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.stream.IntStream;
 
 public class Mapillary360ImageDisplay extends MapillaryAbstractImageDisplay {
     private final BufferedImage offscreenImage;
-    private final int offscreenSizeX = 800;
-    private final int offscreenSizeY = 600;
     private Rectangle viewRect;
-    private static final double FOV = Math.toRadians(110);
-    private final double cameraPlaneDistance;
-    private double rayVecs[][][];
-    private static final double ACCURACY_FACTOR = 2048;
-    private static final int REQUIRED_SIZE = (int) (2 * ACCURACY_FACTOR);
-    private double[] asinTable;
-    private double[] atan2Table;
-    private static final double INV_PI = 1 / Math.PI;
-    private static final double INV_2PI = 1 / (2 * Math.PI);
-    private double currentPsi, currentTheta;
+    private VectorUtil vectorUtil;
 
     static boolean is360Image(InputStream imageStream) {
         try {
@@ -113,11 +103,10 @@ public class Mapillary360ImageDisplay extends MapillaryAbstractImageDisplay {
                 Point click = comp2imgCoord(visibleRect, e.getX(), e.getY());
                 Point center = new Point(offscreenImage.getWidth() / 2, offscreenImage.getHeight() / 2);
 
-                // FIXME: should convert clicked point to rotationXY correctly.
-                double deltaTheta = (double)(click.x - center.x) * (1.0 / (offscreenSizeX / 2) * 10);
-                double deltaPsi = (double)(click.y - center.y) * ( 1.0 / (offscreenSizeY / 2) * 10);
-                currentTheta += (deltaTheta - currentTheta) * 0.25;
-                currentPsi += (deltaPsi - currentPsi)  * 0.25;
+                // FIXME: should convert clicked point correctly.
+                double deltaTheta = (double)(click.x - center.x)  / (offscreenImage.getWidth() / 2);
+                double deltaPsi = (double)(click.y - center.y) / (offscreenImage.getHeight() / 2);
+                vectorUtil.setRotationDelta(deltaTheta ,deltaPsi);
                 Mapillary360ImageDisplay.this.repaint();
             }
         }
@@ -150,46 +139,20 @@ public class Mapillary360ImageDisplay extends MapillaryAbstractImageDisplay {
 
     }
 
-    public Mapillary360ImageDisplay() {
+    public Mapillary360ImageDisplay(int width, int height) {
         ImageDisplayMouseListener mouseListener = new ImageDisplayMouseListener();
         addMouseListener(mouseListener);
         addMouseWheelListener(mouseListener);
         addMouseMotionListener(mouseListener);
 
-        offscreenImage = new BufferedImage(offscreenSizeX, offscreenSizeY, BufferedImage.TYPE_3BYTE_BGR);
+        offscreenImage = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
 
         viewRect = new Rectangle(0, 0, offscreenImage.getWidth(), offscreenImage.getHeight());
-        cameraPlaneDistance = (offscreenImage.getWidth() / 2) / Math.tan(FOV / 2);
-        createRayVecs();
-        precalculateAsinAtan2();
-    }
 
-    private void createRayVecs() {
-        rayVecs = new double[offscreenImage.getWidth()][offscreenImage.getHeight()][3]; // x, y, z
-        for (int y = 0; y < offscreenImage.getHeight(); y++) {
-            for (int x = 0; x < offscreenImage.getWidth(); x++) {
-                double vecX = x - offscreenImage.getWidth() / 2;
-                double vecY = y - offscreenImage.getHeight() / 2;
-                double vecZ = cameraPlaneDistance;
-                double invVecLength = 1 / Math.sqrt(vecX * vecX + vecY * vecY + vecZ * vecZ);
-                rayVecs[x][y][0] = vecX * invVecLength;
-                rayVecs[x][y][1] = vecY * invVecLength;
-                rayVecs[x][y][2] = vecZ * invVecLength;
-            }
-        }
-    }
-
-    private void precalculateAsinAtan2() {
-        asinTable = new double[REQUIRED_SIZE];
-        atan2Table = new double[REQUIRED_SIZE * REQUIRED_SIZE];
-        for (int i = 0; i < 2 * ACCURACY_FACTOR; i++) {
-            asinTable[i] = Math.asin((i - ACCURACY_FACTOR) * 1 / ACCURACY_FACTOR);
-            for (int j = 0; j < 2 * ACCURACY_FACTOR; j++) {
-                double y = (i - ACCURACY_FACTOR) / ACCURACY_FACTOR;
-                double x = (j - ACCURACY_FACTOR) / ACCURACY_FACTOR;
-                atan2Table[i + j * REQUIRED_SIZE] = Math.atan2(y, x);
-            }
-        }
+        vectorUtil = new VectorUtil();
+        double FOV = Math.toRadians(110);
+        double cameraPlaneDistance = (offscreenImage.getWidth() / 2) / Math.tan(FOV / 2);
+        vectorUtil.setCameraScreen(offscreenImage.getWidth(), offscreenImage.getHeight(), cameraPlaneDistance);
     }
 
     /**
@@ -215,46 +178,20 @@ public class Mapillary360ImageDisplay extends MapillaryAbstractImageDisplay {
     }
 
     private void redrawOffscreenImage(BufferedImage image) {
-        double sinRotationX = Math.sin(currentPsi);
-        double cosRotationX = Math.cos(currentPsi);
-        double sinRotationY = Math.sin(currentTheta);
-        double cosRotationY = Math.cos(currentTheta);
-        double tmpVecX, tmpVecY, tmpVecZ;
-        for (int y = 0; y < offscreenImage.getHeight(); y++) {
-            for (int x = 0; x < offscreenImage.getWidth(); x++) {
-                double vecX = rayVecs[x][y][0];
-                double vecY = rayVecs[x][y][1];
-                double vecZ = rayVecs[x][y][2];
-                // rotate x
-                tmpVecZ = vecZ * cosRotationX - vecY * sinRotationX;
-                tmpVecY = vecZ * sinRotationX + vecY * cosRotationX;
-                vecZ = tmpVecZ;
-                vecY = tmpVecY;
-                // rotate y
-                tmpVecZ = vecZ * cosRotationY - vecX * sinRotationY;
-                tmpVecX = vecZ * sinRotationY + vecX * cosRotationY;
-                vecZ = tmpVecZ;
-                vecX = tmpVecX;
-                int iX = (int) ((vecX + 1) * ACCURACY_FACTOR);
-                int iY = (int) ((vecY + 1) * ACCURACY_FACTOR);
-                int iZ = (int) ((vecZ + 1) * ACCURACY_FACTOR);
+        int height = offscreenImage.getHeight();
+        int width = offscreenImage.getWidth();
+        IntStream.range(0, height).forEach(y -> {
+            IntStream.range(0, width).forEach(x -> {
+                Vector3D vec = vectorUtil.getVector3D(x, y);
                 // https://en.wikipedia.org/wiki/UV_mapping
-                double u = 0.5 + (atan2Table[iZ + iX * REQUIRED_SIZE] * INV_2PI);
-                double v = 0.5 - (asinTable[iY] * INV_PI);
-                int tx = (int) (image.getWidth() * (1 - u));
-                int ty = (int) (image.getHeight() * (1 - v));
-
-                if (tx >= image.getWidth()) {
-                    tx = image.getWidth() - 1;
-                }
-                if (ty >= image.getHeight()) {
-                    ty = image.getHeight() - 1;
-                }
-
+                double u = 0.5 - (vectorUtil.atan2(vec.getX(), vec.getZ()) * VectorUtil.INV_2PI);
+                double v = 0.5 + (vectorUtil.asin(vec.getY()) * VectorUtil.INV_PI);
+                int tx = (int) ((image.getWidth() - 1) * u);
+                int ty = (int) ((image.getHeight() - 1) * v);
                 int color = image.getRGB(tx, ty);
                 offscreenImage.setRGB(x, y, color);
-            }
-        }
+            });
+        });
     }
 
     /**
