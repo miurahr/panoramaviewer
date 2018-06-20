@@ -14,11 +14,10 @@ JOSM mapillary plugin.
 LICENSE
 -------
 
-Some portions are come from
+Copyright 2018 Hiroshi Miura
+
+Algorism is inspired from
 https://github.com/leonardo-ono/Java3DSphereImageViewer
-
-
-Many portions are come from
 
 The Mapillary plugin for JOSM – view and edit Mapillary images with the OpenStreetMap editor JOSM
 Copyright (C) 2016 Jorge López Fueyo
