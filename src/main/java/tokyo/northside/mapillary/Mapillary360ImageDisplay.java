@@ -55,8 +55,8 @@ public class Mapillary360ImageDisplay extends MapillaryAbstractImageDisplay {
                 }
             }
             JpegDirectory jpegDirectory = metadata.getFirstDirectoryOfType(JpegDirectory.class);
-            int imageHeight = jpegDirectory.getImageHeight(); // 3264
-            int imageWidth = jpegDirectory.getImageWidth(); // 2448
+            int imageHeight = jpegDirectory.getImageHeight();
+            int imageWidth = jpegDirectory.getImageWidth();
             if ((imageWidth >= 3940) && (imageWidth == imageHeight * 2)) {
                 return true;
             }
@@ -109,7 +109,6 @@ public class Mapillary360ImageDisplay extends MapillaryAbstractImageDisplay {
             }
             if (image != null) {
                 Point click = comp2imgCoord(visibleRect, e.getX(), e.getY());
-                //System.out.printf("Debug: clicked x %d y %d %n",click.x, click.y);
                 Vector3D vec = vectorUtil.getVector3D(click.x, click.y);
                 vectorUtil.setRotation(vec);
                 Mapillary360ImageDisplay.this.repaint();
