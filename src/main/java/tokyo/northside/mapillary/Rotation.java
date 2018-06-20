@@ -13,11 +13,6 @@ class Rotation {
         setPhi(phi);
     }
 
-    void setDelta(double deltaTheta, double deltaPhi) {
-        theta += deltaTheta;
-        phi += deltaPhi;
-    }
-
     double getTheta() {
         return theta;
     }

@@ -1,29 +1,13 @@
 package tokyo.northside.mapillary;
 
+import java.awt.*;
 import java.util.stream.IntStream;
 
 class VectorUtil {
-    private static final double ACCURACY_FACTOR = 2048;
-    private static final int REQUIRED_SIZE = (int) (2 * ACCURACY_FACTOR);
-    private double[] asinTable;
-    private double[] atan2Table;
     private Vector3D[][] vectors;
     private Rotation rotation;
 
-    static final double INV_PI = 1 / Math.PI;
-    static final double INV_2PI = 1 / (2 * Math.PI);
-
     VectorUtil() {
-        asinTable = new double[REQUIRED_SIZE];
-        atan2Table = new double[REQUIRED_SIZE * REQUIRED_SIZE];
-        IntStream.range(0, REQUIRED_SIZE).forEach(i -> {
-            asinTable[i] = Math.asin((i - ACCURACY_FACTOR) * 1 / ACCURACY_FACTOR);
-            IntStream.range(0, REQUIRED_SIZE).forEach(j -> {
-                double y = (i - ACCURACY_FACTOR) / ACCURACY_FACTOR;
-                double x = (j - ACCURACY_FACTOR) / ACCURACY_FACTOR;
-                atan2Table[i + j * REQUIRED_SIZE] = Math.atan2(y, x);
-            });
-        });
         rotation = new Rotation(0, 0);
     }
 
@@ -40,22 +24,34 @@ class VectorUtil {
         });
     }
 
-    double atan2(double x, double z) {
-        int iX = (int) ((x + 1) * ACCURACY_FACTOR);
-        int iZ = (int) ((z + 1) * ACCURACY_FACTOR);
-        return atan2Table[iZ + iX * REQUIRED_SIZE];
-    }
-
-    double asin(double y) {
-        int iY = (int) ((y + 1) * ACCURACY_FACTOR);
-        return asinTable[iY];
-    }
-
     Vector3D getVector3D(int x, int y) {
-        return rotation.rotate(vectors[x][y]);
+        Vector3D res;
+        try {
+            res = rotation.rotate(vectors[x][y]);
+        } catch (Exception e) {
+            res =  new Vector3D(0,0,1);
+        }
+        return res;
     }
 
-    void setRotationDelta(double deltaTheta, double deltaPhi) {
-        rotation.setDelta(deltaTheta, deltaPhi);
+    void setRotation(Vector3D vec) {
+        double theta, phi;
+        try {
+            theta = Math.atan2(vec.getX(), vec.getZ());
+            phi = Math.atan2(vec.getY(), Math.sqrt(vec.getX()*vec.getX() + vec.getZ()*vec.getZ()));
+        } catch (Exception e) {
+            theta = 0; phi = 0;
+        }
+        rotation.setTheta(theta);
+        rotation.setPhi(phi);
+    }
+
+    Point mapping(Vector3D vec, int width, int height) {
+        // https://en.wikipedia.org/wiki/UV_mapping
+        double u = 0.5 + (Math.atan2(vec.getX(), vec.getZ()) / (2 * Math.PI));
+        double v = 0.5 + (Math.asin(vec.getY()) / Math.PI);
+        int tx = (int) ((width - 1) * u);
+        int ty = (int) ((height - 1) * v);
+        return new Point(tx, ty);
     }
 }

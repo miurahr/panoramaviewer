@@ -7,6 +7,8 @@ import com.adobe.xmp.properties.XMPPropertyInfo;
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
 import com.drew.metadata.Metadata;
+import com.drew.metadata.MetadataException;
+import com.drew.metadata.jpeg.JpegDirectory;
 import com.drew.metadata.xmp.XmpDirectory;
 
 import java.awt.Color;
@@ -46,11 +48,19 @@ public class Mapillary360ImageDisplay extends MapillaryAbstractImageDisplay {
                         String proj = pi.getValue();
                         if (proj.equals("equirectangular")) {
                             return true;
+                        } else {
+                            return false;
                         }
                     }
                 }
             }
-        } catch (NullPointerException | ImageProcessingException | IOException | XMPException e) {
+            JpegDirectory jpegDirectory = metadata.getFirstDirectoryOfType(JpegDirectory.class);
+            int imageHeight = jpegDirectory.getImageHeight(); // 3264
+            int imageWidth = jpegDirectory.getImageWidth(); // 2448
+            if ((imageWidth >= 3940) && (imageWidth == imageHeight * 2)) {
+                return true;
+            }
+        } catch (NullPointerException | ImageProcessingException | IOException | XMPException | MetadataException e) {
             // ignore
         }
         return false;
@@ -98,15 +108,10 @@ public class Mapillary360ImageDisplay extends MapillaryAbstractImageDisplay {
                 visibleRect = Mapillary360ImageDisplay.this.viewRect;
             }
             if (image != null) {
-                // Calculate the translation to set the clicked point the center of
-                // the view.
                 Point click = comp2imgCoord(visibleRect, e.getX(), e.getY());
-                Point center = new Point(offscreenImage.getWidth() / 2, offscreenImage.getHeight() / 2);
-
-                // FIXME: should convert clicked point correctly.
-                double deltaTheta = (double)(click.x - center.x)  / (offscreenImage.getWidth() / 2);
-                double deltaPsi = (double)(click.y - center.y) / (offscreenImage.getHeight() / 2);
-                vectorUtil.setRotationDelta(deltaTheta ,deltaPsi);
+                //System.out.printf("Debug: clicked x %d y %d %n",click.x, click.y);
+                Vector3D vec = vectorUtil.getVector3D(click.x, click.y);
+                vectorUtil.setRotation(vec);
                 Mapillary360ImageDisplay.this.repaint();
             }
         }
@@ -183,12 +188,8 @@ public class Mapillary360ImageDisplay extends MapillaryAbstractImageDisplay {
         IntStream.range(0, height).forEach(y -> {
             IntStream.range(0, width).forEach(x -> {
                 Vector3D vec = vectorUtil.getVector3D(x, y);
-                // https://en.wikipedia.org/wiki/UV_mapping
-                double u = 0.5 - (vectorUtil.atan2(vec.getX(), vec.getZ()) * VectorUtil.INV_2PI);
-                double v = 0.5 + (vectorUtil.asin(vec.getY()) * VectorUtil.INV_PI);
-                int tx = (int) ((image.getWidth() - 1) * u);
-                int ty = (int) ((image.getHeight() - 1) * v);
-                int color = image.getRGB(tx, ty);
+                Point p = vectorUtil.mapping(vec, image.getWidth(),image.getHeight());
+                int color = image.getRGB(p.x, p.y);
                 offscreenImage.setRGB(x, y, color);
             });
         });
