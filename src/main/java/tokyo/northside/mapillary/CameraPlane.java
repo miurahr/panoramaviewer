@@ -3,15 +3,14 @@ package tokyo.northside.mapillary;
 import java.awt.*;
 import java.util.stream.IntStream;
 
-class VectorUtil {
+class CameraPlane {
     private Vector3D[][] vectors;
-    private Rotation rotation;
+    private double sinTheta;
+    private double cosTheta;
+    private double sinPhi;
+    private double cosPhi;
 
-    VectorUtil() {
-        rotation = new Rotation(0, 0);
-    }
-
-    void setCameraScreen(int width, int height, double d) {
+    CameraPlane (int width, int height, double d, double theta, double phi) {
         vectors = new Vector3D[width][height];
         IntStream.range(0, height).forEach(y -> {
             IntStream.range(0, width).forEach(x -> {
@@ -22,12 +21,14 @@ class VectorUtil {
                 vectors[x][y] = new Vector3D(vecX * invVecLength, vecY * invVecLength, vecZ * invVecLength);
             });
         });
+        setTheta(theta);
+        setPhi(phi);
     }
 
     Vector3D getVector3D(int x, int y) {
         Vector3D res;
         try {
-            res = rotation.rotate(vectors[x][y]);
+            res = rotate(vectors[x][y]);
         } catch (Exception e) {
             res =  new Vector3D(0,0,1);
         }
@@ -42,8 +43,8 @@ class VectorUtil {
         } catch (Exception e) {
             theta = 0; phi = 0;
         }
-        rotation.setTheta(theta);
-        rotation.setPhi(phi);
+        setTheta(theta);
+        setPhi(phi);
     }
 
     Point mapping(Vector3D vec, int width, int height) {
@@ -53,5 +54,25 @@ class VectorUtil {
         int tx = (int) ((width - 1) * u);
         int ty = (int) ((height - 1) * v);
         return new Point(tx, ty);
+    }
+
+
+    void setTheta(double theta) {
+        this.sinTheta = Math.sin(theta);
+        this.cosTheta = Math.cos(theta);
+    }
+
+    void setPhi(double phi) {
+        this.sinPhi = Math.sin(phi);
+        this.cosPhi = Math.cos(phi);
+    }
+
+    Vector3D rotate(Vector3D vec) {
+        double vecX, vecY, vecZ;
+        vecZ = vec.getZ() * cosPhi - vec.getY() * sinPhi;
+        vecY = vec.getZ() * sinPhi + vec.getY() * cosPhi;
+        vecX = vecZ * sinTheta + vec.getX() * cosTheta;
+        vecZ = vecZ * cosTheta - vec.getX() * sinTheta;
+        return new Vector3D(vecX, vecY, vecZ);
     }
 }
