@@ -5,6 +5,7 @@ import tokyo.northside.imageviewer.panorama.ImageProperty;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 
 
@@ -14,9 +15,6 @@ public class MainDialog extends JFrame {
    * Object containing the shown image and that handles zoom and drag
    */
   public ImageDisplay imageDisplay;
-
-  /* Test data */
-  private String imageFileName = "360photo.jpg";
 
   /**
    *  Initialize gui parts and prepare Mapillary360ImageDisplay instance
@@ -47,18 +45,13 @@ public class MainDialog extends JFrame {
   }
 
 
-  public void loadingFinished() {
-     // if (!SwingUtilities.isEventDispatchThread()) {
-     //   SwingUtilities.invokeLater(() -> loadingFinished(data, attributes, result));
-     // } else if (data != null && result == LoadResult.SUCCESS) {
+  public void open(File file) {
     try {
-        // InputStream ins = new ByteArrayInputStream(data.getContent());
-        BufferedImage img = ImageIO.read(getClass().getResourceAsStream(imageFileName));
-        /* end of Mock */
+        BufferedImage img = ImageIO.read(file);
         if (img == null)
           return;
         imageDisplay = new ImageDisplay();
-        boolean pano = ImageProperty.is360Image(getClass().getResourceAsStream(imageFileName));
+        boolean pano = ImageProperty.is360Image(getClass().getResourceAsStream(file.getPath()));
         this.getContentPane().add(imageDisplay);
         this.setResizable(false);
         this.setVisible(true);
@@ -72,7 +65,12 @@ public class MainDialog extends JFrame {
     }
   }
 
-  public static void main(String[] args) {
-      SwingUtilities.invokeLater(() -> MainDialog.getInstance().loadingFinished());
+  public static void main(final String[] args) {
+    if (args == null || args.length == 0 || args[0].trim().isEmpty()) {
+        System.out.println("You need to specify an image path!");
+        return;
+    }
+    File file = new File(args[0]);
+    SwingUtilities.invokeLater(() -> MainDialog.getInstance().open(file));
   }
 }
