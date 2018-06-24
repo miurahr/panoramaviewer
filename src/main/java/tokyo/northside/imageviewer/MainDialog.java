@@ -6,7 +6,9 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 
 
 public class MainDialog extends JFrame {
@@ -51,15 +53,16 @@ public class MainDialog extends JFrame {
         if (img == null)
           return;
         imageDisplay = new ImageDisplay();
-        boolean pano = ImageProperty.is360Image(getClass().getResourceAsStream(file.getPath()));
+
+        boolean pano = ImageProperty.is360Image(new FileInputStream(file));
+        if (pano)
+            System.err.println("This is a panorama photo!");
+
         this.getContentPane().add(imageDisplay);
         this.setResizable(false);
         this.setVisible(true);
         imageDisplay.requestFocus();
-        if (imageDisplay.getImage() == null ||
-            img.getHeight() > this.imageDisplay.getImage().getHeight()) {
-          imageDisplay.setImage(img, pano);
-        }
+        imageDisplay.setImage(img, pano);
     } catch (IOException e) {
       // ignore
     }
