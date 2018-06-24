@@ -1,6 +1,8 @@
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'application'
+apply plugin: 'jacoco'
+apply plugin: 'pmd'
 
 version = '0.1'
 
@@ -8,9 +10,11 @@ repositories {
     jcenter()
 }
 
-mainClassName = 'tokyo.northside.mapillary.MapillaryMainDialogStub'
+mainClassName = 'tokyo.northside.imageviewer.MainDialog'
 
 dependencies {
     compile group: 'com.drewnoakes', name: 'metadata-extractor', version: '2.11.0'
+    testImplementation 'com.github.tomakehurst:wiremock:2.17.0'
+    testImplementation 'junit:junit:4.12'
 }
 

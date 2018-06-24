@@ -1,4 +1,4 @@
-package tokyo.northside.mapillary;
+package tokyo.northside.imageviewer.panorama;
 
 public class Vector3D {
 

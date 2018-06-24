@@ -1,4 +1,4 @@
-package tokyo.northside.mapillary;
+package tokyo.northside.imageviewer.panorama;
 
 import com.adobe.xmp.XMPException;
 import com.adobe.xmp.XMPIterator;
@@ -16,7 +16,7 @@ import java.io.InputStream;
 
 public class ImageProperty {
 
-  static boolean is360Image(InputStream imageStream) {
+  public static boolean is360Image(InputStream imageStream) {
     try {
       Metadata metadata = ImageMetadataReader.readMetadata(imageStream);
       XmpDirectory xmpDirectory = metadata.getFirstDirectoryOfType(XmpDirectory.class);
