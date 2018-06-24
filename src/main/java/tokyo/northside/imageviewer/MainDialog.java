@@ -1,4 +1,6 @@
-package tokyo.northside.mapillary;
+package tokyo.northside.imageviewer;
+
+import tokyo.northside.imageviewer.panorama.ImageProperty;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -6,12 +8,12 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 
 
-public class MapillaryMainDialogStub extends JFrame {
-  private static MapillaryMainDialogStub instance;
+public class MainDialog extends JFrame {
+  private static MainDialog instance;
   /**
    * Object containing the shown image and that handles zoom and drag
    */
-  public MapillaryAbstractImageDisplay mapillaryImageDisplay;
+  public ImageDisplay imageDisplay;
 
   /* Test data */
   private String imageFileName = "360photo.jpg";
@@ -19,7 +21,7 @@ public class MapillaryMainDialogStub extends JFrame {
   /**
    *  Initialize gui parts and prepare Mapillary360ImageDisplay instance
    */
-  private MapillaryMainDialogStub() {
+  private MainDialog() {
     this.setTitle("Java 360 Sphere Image Viewer");
     this.setSize(800, 600);
     this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -31,9 +33,9 @@ public class MapillaryMainDialogStub extends JFrame {
    *
    * @return The unique instance of the class.
    */
-  public static synchronized MapillaryMainDialogStub getInstance() {
+  public static synchronized MainDialog getInstance() {
     if (instance == null)
-      instance = new MapillaryMainDialogStub();
+      instance = new MainDialog();
     return instance;
   }
 
@@ -53,22 +55,17 @@ public class MapillaryMainDialogStub extends JFrame {
         // InputStream ins = new ByteArrayInputStream(data.getContent());
         BufferedImage img = ImageIO.read(getClass().getResourceAsStream(imageFileName));
         /* end of Mock */
-        if (img == null) {
+        if (img == null)
           return;
-        }
-        if(ImageProperty.is360Image(getClass().getResourceAsStream(imageFileName))) {
-          mapillaryImageDisplay = new Mapillary360ImageDisplay(this.getWidth(),this.getHeight());
-        } else {
-          mapillaryImageDisplay = new MapillaryImageDisplay();
-        }
-        this.getContentPane().add(mapillaryImageDisplay);
+        imageDisplay = new ImageDisplay();
+        boolean pano = ImageProperty.is360Image(getClass().getResourceAsStream(imageFileName));
+        this.getContentPane().add(imageDisplay);
         this.setResizable(false);
         this.setVisible(true);
-        mapillaryImageDisplay.requestFocus();
-        if (mapillaryImageDisplay.getImage() == null ||
-            img.getHeight() > this.mapillaryImageDisplay.getImage().getHeight()) {
-          //final MapillaryAbstractImage mai = getImage();
-          mapillaryImageDisplay.setImage(img, null);
+        imageDisplay.requestFocus();
+        if (imageDisplay.getImage() == null ||
+            img.getHeight() > this.imageDisplay.getImage().getHeight()) {
+          imageDisplay.setImage(img, pano);
         }
     } catch (IOException e) {
       // ignore
@@ -76,6 +73,6 @@ public class MapillaryMainDialogStub extends JFrame {
   }
 
   public static void main(String[] args) {
-      SwingUtilities.invokeLater(() -> MapillaryMainDialogStub.getInstance().loadingFinished());
+      SwingUtilities.invokeLater(() -> MainDialog.getInstance().loadingFinished());
   }
 }
