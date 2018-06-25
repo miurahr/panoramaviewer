@@ -2,7 +2,6 @@
 package tokyo.northside.imageviewer;
 
 import tokyo.northside.imageviewer.panorama.CameraPlane;
-import tokyo.northside.imageviewer.panorama.Vector3D;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -151,8 +150,7 @@ public class ImageDisplay extends JComponent {
       if (image != null && Math.min(getSize().getWidth(), getSize().getHeight()) > 0) {
         if (pano) {
           Point click = comp2imgCoord(visibleRect, e.getX(), e.getY());
-          Vector3D vec = cameraPlane.getVector3D(click.x, click.y);
-          cameraPlane.setRotation(vec);
+          cameraPlane.setRotation(click);
         } else {
           // Calculate the translation to set the clicked point the center of
           // the view.
@@ -188,8 +186,20 @@ public class ImageDisplay extends JComponent {
       }
       if (image == null)
         return;
-      this.mouseIsDragging = false;
-      ImageDisplay.this.selectedRect = null;
+      if (e.getButton() == 1) {
+        this.mousePointInImg = comp2imgCoord(visibleRect, e.getX(), e.getY());
+        this.mouseIsDragging = true;
+        ImageDisplay.this.selectedRect = null;
+      } else if (e.getButton() == 3) {
+        this.mousePointInImg = comp2imgCoord(visibleRect, e.getX(), e.getY());
+        checkPointInVisibleRect(this.mousePointInImg, visibleRect);
+        this.mouseIsDragging = false;
+        ImageDisplay.this.selectedRect = new Rectangle(this.mousePointInImg.x, this.mousePointInImg.y, 0, 0);
+        ImageDisplay.this.repaint();
+      } else {
+        this.mouseIsDragging = false;
+        ImageDisplay.this.selectedRect = null;
+      }
     }
 
     @Override
@@ -208,14 +218,16 @@ public class ImageDisplay extends JComponent {
         return;
       }
       if (this.mouseIsDragging) {
-        Point p = comp2imgCoord(visibleRect, e.getX(), e.getY());
-        visibleRect.x += this.mousePointInImg.x - p.x;
-        visibleRect.y += this.mousePointInImg.y - p.y;
-        checkVisibleRectPos(image, visibleRect);
-        synchronized (ImageDisplay.this) {
-          ImageDisplay.this.visibleRect = visibleRect;
+        if (!ImageDisplay.this.pano) {
+          Point p = comp2imgCoord(visibleRect, e.getX(), e.getY());
+          visibleRect.x += this.mousePointInImg.x - p.x;
+          visibleRect.y += this.mousePointInImg.y - p.y;
+          checkVisibleRectPos(image, visibleRect);
+          synchronized (ImageDisplay.this) {
+            ImageDisplay.this.visibleRect = visibleRect;
+          }
+          ImageDisplay.this.repaint();
         }
-        ImageDisplay.this.repaint();
       } else if (ImageDisplay.this.selectedRect != null) {
         Point p = comp2imgCoord(visibleRect, e.getX(), e.getY());
         checkPointInVisibleRect(p, visibleRect);
@@ -246,6 +258,11 @@ public class ImageDisplay extends JComponent {
         return;
       }
       if (this.mouseIsDragging) {
+        if (ImageDisplay.this.pano) {
+          Point current = comp2imgCoord(visibleRect, e.getX(), e.getY());
+          cameraPlane.setRotationFromDelta(mousePointInImg, current);
+          ImageDisplay.this.repaint();
+        }
         this.mouseIsDragging = false;
       } else if (ImageDisplay.this.selectedRect != null) {
         int oldWidth = ImageDisplay.this.selectedRect.width;

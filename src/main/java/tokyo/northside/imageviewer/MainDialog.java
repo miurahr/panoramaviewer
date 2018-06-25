@@ -69,11 +69,13 @@ public class MainDialog extends JFrame {
   }
 
   public static void main(final String[] args) {
+    File file;
     if (args == null || args.length == 0 || args[0].trim().isEmpty()) {
-        System.out.println("You need to specify an image path!");
-        return;
+      System.out.println("You need to specify an image path!");
+      file = new File(MainDialog.class.getResource("360photo.jpg").getPath());
+    } else {
+      file = new File(args[0]);
     }
-    File file = new File(args[0]);
     SwingUtilities.invokeLater(() -> MainDialog.getInstance().open(file));
   }
 }
