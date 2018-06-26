@@ -17,6 +17,12 @@ MOUSE Operation
 - Drag with right button: move view point.
 
 
+Key Bind
+--------
+
+Control-Q:  exit
+
+
 COPYRIGHT
 ---------
 

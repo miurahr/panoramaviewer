@@ -9,6 +9,8 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.event.KeyListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -50,6 +52,21 @@ public class ImageDisplay extends JComponent {
   private BufferedImage offscreenImage;
 
   private CameraPlane cameraPlane;
+
+  private class ImgDisplayKeyListener implements KeyListener {
+
+    public void keyPressed(KeyEvent e) {
+      if ((e.getKeyCode() == KeyEvent.VK_Q) && ((e.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {
+        System.exit(0);
+      }
+    }
+
+    public void keyReleased(KeyEvent e){
+    }
+
+    public void keyTyped(KeyEvent e){
+    }
+  }
 
   private class ImgDisplayMouseListener implements MouseListener, MouseWheelListener, MouseMotionListener {
     private boolean mouseIsDragging;
@@ -373,6 +390,8 @@ public class ImageDisplay extends JComponent {
     addMouseListener(mouseListener);
     addMouseWheelListener(mouseListener);
     addMouseMotionListener(mouseListener);
+    ImgDisplayKeyListener keyListener = new ImgDisplayKeyListener();
+    addKeyListener(keyListener);
   }
 
   /**
