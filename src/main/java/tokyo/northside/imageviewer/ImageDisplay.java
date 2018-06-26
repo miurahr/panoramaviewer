@@ -56,6 +56,10 @@ public class ImageDisplay extends JComponent {
     private long lastTimeForMousePoint;
     private Point mousePointInImg;
 
+    private static final int PICTURE_DRAG_BUTTON = 3;
+    private static final int PICTURE_OPTION_BUTTON = 2;
+    private static final int PICTURE_ZOOM_BUTTON = 1;
+
     /**
      * Zoom in and out, trying to preserve the point of the image that was under
      * the mouse cursor at the same place
@@ -148,10 +152,40 @@ public class ImageDisplay extends JComponent {
         visibleRect = ImageDisplay.this.visibleRect;
       }
       if (image != null && Math.min(getSize().getWidth(), getSize().getHeight()) > 0) {
-        if (pano) {
-          Point click = comp2imgCoord(visibleRect, e.getX(), e.getY());
-          cameraPlane.setRotation(click);
+        if (ImageDisplay.this.pano) {
+          if (e.getButton() == PICTURE_OPTION_BUTTON) {
+            if (!ImageDisplay.this.visibleRect.equals(new Rectangle(0, 0,
+                    offscreenImage.getWidth(null), offscreenImage.getHeight(null)))) {
+              // Zoom to 1:1
+              ImageDisplay.this.visibleRect = new Rectangle(0, 0,
+                  offscreenImage.getWidth(null), offscreenImage.getHeight(null));
+              ImageDisplay.this.repaint();
+            }
+          } else if (e.getButton() == PICTURE_DRAG_BUTTON) {
+            cameraPlane.setRotation(comp2imgCoord(visibleRect, e.getX(), e.getY()));
+            ImageDisplay.this.repaint();
+          }
+          return;
         } else {
+          if (e.getButton() == PICTURE_OPTION_BUTTON) {
+            if (!ImageDisplay.this.visibleRect.equals(new Rectangle(0, 0, image.getWidth(null), image.getHeight(null)))) {
+              // Zooms to 1:1
+              ImageDisplay.this.visibleRect = new Rectangle(0, 0,
+                  image.getWidth(null), image.getHeight(null));
+            } else {
+              // Zooms to best fit.
+              ImageDisplay.this.visibleRect = new Rectangle(
+                  0,
+                  (image.getHeight(null) - (image.getWidth(null) * getHeight()) / getWidth()) / 2,
+                  image.getWidth(null),
+                  (image.getWidth(null) * getHeight()) / getWidth()
+              );
+            }
+            ImageDisplay.this.repaint();
+            return;
+          } else if (e.getButton() != PICTURE_DRAG_BUTTON) {
+            return;
+          }
           // Calculate the translation to set the clicked point the center of
           // the view.
           Point click = comp2imgCoord(visibleRect, e.getX(), e.getY());
@@ -162,8 +196,8 @@ public class ImageDisplay extends JComponent {
           synchronized (ImageDisplay.this) {
             ImageDisplay.this.visibleRect = visibleRect;
           }
+          ImageDisplay.this.repaint();
         }
-        ImageDisplay.this.repaint();
       }
     }
 
@@ -186,11 +220,11 @@ public class ImageDisplay extends JComponent {
       }
       if (image == null)
         return;
-      if (e.getButton() == 1) {
+      if (e.getButton() == PICTURE_DRAG_BUTTON) {
         this.mousePointInImg = comp2imgCoord(visibleRect, e.getX(), e.getY());
         this.mouseIsDragging = true;
         ImageDisplay.this.selectedRect = null;
-      } else if (e.getButton() == 3) {
+      } else if (e.getButton() == PICTURE_ZOOM_BUTTON) {
         this.mousePointInImg = comp2imgCoord(visibleRect, e.getX(), e.getY());
         checkPointInVisibleRect(this.mousePointInImg, visibleRect);
         this.mouseIsDragging = false;

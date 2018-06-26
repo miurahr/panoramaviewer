@@ -3,11 +3,27 @@
 
 The program implement a 3D photo viewer.
 
+MOUSE Operation
+------------
+
+- Left button: Zoom control
+- Right button: View point control
+- Middle button: Optional control
+
+- Click wit left button: 
+- Click with middle button:  zoom out to original level.
+- Drag with left button: zoom in to selected area.
+  (maximum zoom level is 2:1)
+- Drag with right button: move view point.
+
+
 COPYRIGHT
 ---------
 
 Copyright 2018 Hiroshi Miura
+
 Copyright (C) 2016 Jorge López Fueyo
+
 Copyright (C) 2016 Florian Schäfer
 
 This program is free software; you can redistribute it and/or modify
