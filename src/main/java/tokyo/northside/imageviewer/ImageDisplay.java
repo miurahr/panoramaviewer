@@ -410,7 +410,7 @@ public class ImageDisplay extends JComponent {
         if (this.pano) {
           this.visibleRect = new Rectangle(0, 0, s.width, s.height);
           offscreenImage = new BufferedImage(s.width, s.height, BufferedImage.TYPE_3BYTE_BGR);
-          cameraPlane = new CameraPlane(s.width, s.height, s.width, FOV);
+          cameraPlane = new CameraPlane(s.width, s.height, FOV);
         } else {
           this.visibleRect = new Rectangle(0, 0, image.getWidth(null),
                   image.getHeight(null));

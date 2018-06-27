@@ -20,9 +20,8 @@ public class CameraPlane {
     private double cosPhi;
 
 
-    public CameraPlane(int width, int height, int target_width, int fov) {
-        double HALFFOV = Math.toRadians(110)/2.0d;
-        double cameraPlaneDistance = (target_width / 2.0d) / Math.tan(HALFFOV);
+    public CameraPlane(int width, int height, int fov) {
+        double cameraPlaneDistance = (width / 2) / Math.tan(Math.toRadians(fov)/2);
         init(width, height, cameraPlaneDistance);
     }
 

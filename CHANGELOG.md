@@ -6,8 +6,10 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 ### Changed
+- CameraPlane: change constructor signature
 
 ### Fixed
+- CameraPlane: fixed to use ignored `fov` value
 
 ## [0.2] - 2018-06-27
 ### Added
