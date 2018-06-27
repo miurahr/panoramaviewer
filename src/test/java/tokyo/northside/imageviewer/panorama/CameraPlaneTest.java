@@ -44,7 +44,7 @@ public class CameraPlaneTest {
     Vector3d vec = new Vector3d(0, 0, 1);
     cameraPlane.setRotation(vec);
     Vector3d out = cameraPlane.getVector(300, 200);
-    Point map = cameraPlane.mapping(out, 2048, 1024);
+    Point map = cameraPlane.getSourcePoint(out, 2048, 1024);
     assertEquals(911, map.getX(), 1);
     assertEquals(405, map.getY(), 1);
   }

@@ -11,7 +11,10 @@ import org.joml.Vector3d;
  *
  */
 public class CameraPlane {
-    private Vector3d[][] vectors;
+    private final Vector3d[][] vectors;
+    private final int maxX;
+    private final int maxY;
+
     private double theta;
     private double sinTheta;
     private double cosTheta;
@@ -22,7 +25,11 @@ public class CameraPlane {
 
     public CameraPlane(int width, int height, int fov) {
         double cameraPlaneDistance = (width / 2) / Math.tan(Math.toRadians(fov)/2);
-        init(width, height, cameraPlaneDistance);
+        setRotation(0.0, 0.0);
+        vectors = new Vector3d[height][width];
+        initVectors(width, height, cameraPlaneDistance);
+        maxX = width;
+        maxY = height;
     }
 
     /**
@@ -32,15 +39,17 @@ public class CameraPlane {
      * @param d
      */
     public CameraPlane(int width, int height, double d) {
-      init(width, height, d);
+        setRotation(0.0, 0.0);
+        vectors = new Vector3d[height][width];
+        initVectors(width, height, d);
+        maxX = width;
+        maxY = height;
     }
 
-    private void init(int width, int height, double d) {
-        setRotation(0.0, 0.0);
-        vectors = new Vector3d[width][height];
+    private void initVectors(int width, int height, double d) {
         IntStream.range(0, height).forEach(y -> {
             IntStream.range(0, width).forEach(x -> {
-              vectors[x][y] = new Vector3d(x - width /2, y - height/2, d).normalize();
+              vectors[y][x] = new Vector3d(x - width /2, y - height/2, d).normalize();
             });
         });
     }
@@ -50,7 +59,9 @@ public class CameraPlane {
      * @param p Point within current plane.
      */
     public void setRotation(final Point p) {
-        setRotation(getVector(p));
+        int y = Math.min(maxY, p.y);
+        int x = Math.min(maxX, p.x);
+        setRotation(rotate(vectors[y][x]));
     }
 
     /**
@@ -59,47 +70,50 @@ public class CameraPlane {
      * @param to
      */
     public void setRotationFromDelta(final Point from, final Point to) {
-        Vector3d f1 = vectors[from.x][from.y];
-        Vector3d t1 = vectors[to.x][to.y];
-        double deltaTheta = Math.atan2(f1.x, f1.z) - Math.atan2(t1.x, t1.z);
-        double deltaPhi = Math.atan2(f1.y, Math.sqrt(f1.x * f1.x+ f1.z * f1.z))
+        // check and limit index range.
+        int fromY = Math.min(maxY, from.y);
+        int fromX = Math.min(maxX, from.x);
+        int toY = Math.min(maxY, to.y);
+        int toX = Math.min(maxX, to.x);
+
+        Vector3d f1 = vectors[fromY][fromX];
+        Vector3d t1 = vectors[toY][toX];
+
+        double newTheta = theta + Math.atan2(f1.x, f1.z) - Math.atan2(t1.x, t1.z);
+        double newPhi = phi + Math.atan2(f1.y, Math.sqrt(f1.x * f1.x+ f1.z * f1.z))
                - Math.atan2(t1.y, Math.sqrt(t1.x * t1.x + t1.z * t1.z));
-        double newTheta =  theta + deltaTheta;
-        double newPhi = phi + deltaPhi;
         setRotation(newTheta, newPhi);
     }
 
     /**
-     *
-     * @param sourceImage
-     * @param targetImage
+     * Mapping and set color from equirectangular projected source image to target BufferedImage.
+     * @param sourceImage equirectangular projected source image
+     * @param targetImage target buffer
      */
     public void mapping(BufferedImage sourceImage, BufferedImage targetImage) {
-        int height = targetImage.getHeight();
-        int width = targetImage.getWidth();
+        // limit range
+        int height = Math.min(maxY, targetImage.getHeight());
+        int width = Math.min(maxX, targetImage.getWidth());
+
         IntStream.range(0, height).parallel().forEach(y -> {
             IntStream.range(0, width).forEach(x -> {
-                Vector3d vec = getVector(new Point(x, y));
-                Point p = mapping(vec, sourceImage.getWidth(), sourceImage.getHeight());
-                int color = sourceImage.getRGB(p.x, p.y);
-                targetImage.setRGB(x, y, color);
+                Point p = getSourcePoint(rotate(vectors[y][x]),
+                    sourceImage.getWidth(), sourceImage.getHeight());
+                targetImage.setRGB(x, y, sourceImage.getRGB(p.x, p.y));
             });
         });
     }
 
     /**
-     *
-     * @param vec
-     * @param width
-     * @param height
+     * Internal function to get point in sourceImage from plane's point.
+     * @param vec view point vector
+     * @param width source image width
+     * @param height source image height
      * @return
      */
-    Point mapping(Vector3d vec, int width, int height) {
-        // https://en.wikipedia.org/wiki/UV_mapping
-        double u = 0.5 + (Math.atan2(vec.x, vec.z)  / (Math.PI * 2));
-        double v = 0.5 + (Math.asin(vec.y) / Math.PI);
-        int tx = (int) ((width - 1) * u);
-        int ty = (int) ((height - 1) * v);
+    Point getSourcePoint(Vector3d vec, int width, int height) {
+        int tx = (int) ((width - 1) * (0.5 + (Math.atan2(vec.x, vec.z) / (Math.PI * 2))));
+        int ty = (int) ((height - 1) * (0.5 + (Math.asin(vec.y) / Math.PI)));
         return new Point(tx, ty);
     }
 
@@ -117,14 +131,6 @@ public class CameraPlane {
             phi = 0;
         }
         setRotation(theta, phi);
-    }
-
-    /**
-     * Get current view vector
-     * @return current rotation as vector
-     */
-    Vector3d getRotation() {
-        return new Vector3d(sinTheta, sinPhi, cosPhi * cosTheta);
     }
 
     private void setRotation(double theta, double phi) {
@@ -145,18 +151,22 @@ public class CameraPlane {
         return new Vector3d(vecX, vecY, vecZ);
     }
 
-    private Vector3d getVector(final Point p) {
-        return getVector(p.x, p.y);
+    /**
+     * For test: getRotated vector.
+     * @param x
+     * @param y
+     * @return
+     */
+    Vector3d getVector(final int x, final int y) {
+            return rotate(vectors[y][x]);
     }
 
-    Vector3d getVector(final int x, final int y) {
-        Vector3d res;
-        try {
-            res = rotate(vectors[x][y]);
-        } catch (Exception e) {
-            res = new Vector3d(0, 0, 1);
-        }
-        return res;
+    /**
+     * For test: Get current view vector
+     * @return current rotation as vector
+     */
+    Vector3d getRotation() {
+        return new Vector3d(sinTheta, sinPhi, cosPhi * cosTheta);
     }
 
 }

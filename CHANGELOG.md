@@ -4,9 +4,13 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- CameraPlane: add range check for vectors array index
 
 ### Changed
-- CameraPlane: change constructor signature
+- CameraPlane:
+  - change constructor signature
+  - change vectors index column order for performance.
+  - refactoring and more javadoc.
 
 ### Fixed
 - CameraPlane: fixed to use ignored `fov` value
