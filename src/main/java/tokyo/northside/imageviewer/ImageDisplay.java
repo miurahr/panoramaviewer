@@ -21,6 +21,7 @@ import java.awt.image.BufferedImage;
 
 import javax.swing.JComponent;
 
+
 /**
  * This object is a responsible JComponent which lets you zoom and drag. It is
  * included in a object.
@@ -163,7 +164,7 @@ public class ImageDisplay extends JComponent {
     @Override
     public void mouseClicked(MouseEvent e) {
       // Move the center to the clicked point.
-      Image image;
+      BufferedImage image;
       Rectangle visibleRect;
       synchronized (ImageDisplay.this) {
         image = getImage();
@@ -258,7 +259,7 @@ public class ImageDisplay extends JComponent {
     public void mouseDragged(MouseEvent e) {
       if (!this.mouseIsDragging && ImageDisplay.this.selectedRect == null)
         return;
-      Image image;
+      BufferedImage image;
       Rectangle visibleRect;
       synchronized (ImageDisplay.this) {
         image = getImage();
@@ -300,7 +301,7 @@ public class ImageDisplay extends JComponent {
     public void mouseReleased(MouseEvent e) {
       if (!this.mouseIsDragging && ImageDisplay.this.selectedRect == null)
         return;
-      Image image;
+      BufferedImage image;
       synchronized (ImageDisplay.this) {
         image = getImage();
       }
@@ -410,7 +411,9 @@ public class ImageDisplay extends JComponent {
         if (this.pano) {
           this.visibleRect = new Rectangle(0, 0, s.width, s.height);
           offscreenImage = new BufferedImage(s.width, s.height, BufferedImage.TYPE_3BYTE_BGR);
-          cameraPlane = new CameraPlane(s.width, s.height, FOV);
+          cameraPlane = new CameraPlane(s.width, s.height,
+              (s.width / 2.0d) / Math.tan(Math.toRadians(FOV) / 2.0d));
+          cameraPlane.mapping(image, offscreenImage);
         } else {
           this.visibleRect = new Rectangle(0, 0, image.getWidth(null),
                   image.getHeight(null));

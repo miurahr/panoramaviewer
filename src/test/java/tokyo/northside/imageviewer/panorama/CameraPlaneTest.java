@@ -1,14 +1,15 @@
 // License: GPL. For details, see LICENSE file.
 package tokyo.northside.imageviewer.panorama;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 import java.awt.Point;
+import java.awt.geom.Point2D;
 
-import org.joml.Math;
+import org.joml.Vector2d;
 import org.joml.Vector3d;
+import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
 
 public class CameraPlaneTest {
 
@@ -32,10 +33,10 @@ public class CameraPlaneTest {
     cameraPlane = new CameraPlane(800, 600, CAMERA_PLANE_DISTANCE);
     Vector3d vec = new Vector3d(0, 0, 1);
     cameraPlane.setRotation(vec);
-    Vector3d out = cameraPlane.getVector(400, 300);
-    assertEquals(0.0, out.x(), 1.0E-04);
-    assertEquals(0.0, out.y(), 1.0E-04);
-    assertEquals(1.0, out.z(), 1.0E-04);
+    Vector3d out = cameraPlane.getVector3d(new Point(400, 300));
+    assertEquals(0.0, out.x, 1.0E-04);
+    assertEquals(0.0, out.y, 1.0E-04);
+    assertEquals(1.0, out.z, 1.0E-04);
   }
 
   @Test
@@ -43,10 +44,10 @@ public class CameraPlaneTest {
     cameraPlane = new CameraPlane(800, 600, CAMERA_PLANE_DISTANCE);
     Vector3d vec = new Vector3d(0, 0, 1);
     cameraPlane.setRotation(vec);
-    Vector3d out = cameraPlane.getVector(300, 200);
-    Point map = cameraPlane.getSourcePoint(out, 2048, 1024);
-    assertEquals(911, map.getX(), 1);
-    assertEquals(405, map.getY(), 1);
+    Vector3d out = cameraPlane.getVector3d(new Point(300, 200));
+    Vector2d map = UVMapping.getTextureCoordinate(out);
+    assertEquals(0.44542099, map.x, 1e-8);
+    assertEquals(0.39674936, map.y, 1e-8);
   }
 }
 
