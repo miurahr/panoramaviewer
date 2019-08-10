@@ -1,3 +1,5 @@
+// License: GPL. For details, see LICENSE file.
+// SPDX-License-Identifier: GPL-2.0-or-later
 package tokyo.northside.imageviewer;
 
 import javax.imageio.ImageIO;
