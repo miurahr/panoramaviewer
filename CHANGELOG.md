@@ -7,8 +7,10 @@ All notable changes to this project will be documented in this file.
 - CameraPlane: add range check for vectors array index
 
 ### Changed
+- Rebased on JOSM/Mapillary classes.
+- Utilize JOML math functions.
 - CameraPlane:
-  - change constructor signature
+  - change constructer signature
   - change vectors index column order for performance.
   - refactoring and more javadoc.
 
