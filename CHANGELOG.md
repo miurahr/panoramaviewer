@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Added
+- Add file chooser dialog when no file are specified in command line.
 
 ## [0.3] - 2019-08-11
 ### Added
