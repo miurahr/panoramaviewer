@@ -4,6 +4,8 @@ package tokyo.northside.imageviewer;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.filechooser.FileSystemView;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -56,8 +58,16 @@ public class MainDialog extends JFrame {
   public static void main(final String[] args) {
     File file;
     if (args == null || args.length == 0 || args[0].trim().isEmpty()) {
-      System.out.println("You need to specify an image path!");
-      return;
+      JFileChooser chooser =  new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
+      FileNameExtensionFilter filter = new FileNameExtensionFilter(
+        "JPG Images", "jpg");
+      chooser.setFileFilter(filter);
+      int returnVal = chooser.showOpenDialog(null);
+      if(returnVal == JFileChooser.APPROVE_OPTION) {
+            file = chooser.getSelectedFile();
+      } else {
+        return;
+      }
     } else {
       file = new File(args[0]);
     }
