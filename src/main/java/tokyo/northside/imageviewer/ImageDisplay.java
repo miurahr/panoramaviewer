@@ -22,6 +22,8 @@ import java.awt.image.BufferedImage;
 
 import javax.swing.JComponent;
 
+import org.joml.Math;
+
 
 /**
  * This object is a responsible JComponent which lets you zoom and drag. It is
@@ -33,6 +35,7 @@ import javax.swing.JComponent;
 public class ImageDisplay extends JComponent {
 
   private static final long serialVersionUID = 3369727203329307716L;
+  private static final double PANORAMA_FOV = Math.toRadians(110);
 
   /**
    * The rectangle (in image coordinates) of the image that is visible. This
@@ -53,8 +56,6 @@ public class ImageDisplay extends JComponent {
   private BufferedImage offscreenImage;
 
   private CameraPlane cameraPlane;
-
-  private static final int FOV = 110;
 
   private class ImgDisplayKeyListener implements KeyListener {
 
@@ -413,7 +414,7 @@ public class ImageDisplay extends JComponent {
           this.visibleRect = new Rectangle(0, 0, s.width, s.height);
           offscreenImage = new BufferedImage(s.width, s.height, BufferedImage.TYPE_3BYTE_BGR);
           cameraPlane = new CameraPlane(s.width, s.height,
-              (s.width / 2.0d) / Math.tan(Math.toRadians(FOV) / 2.0d));
+              (s.width / 2.0d) / Math.tan(PANORAMA_FOV / 2.0d));
           cameraPlane.mapping(image, offscreenImage);
         } else {
           this.visibleRect = new Rectangle(0, 0, image.getWidth(null),
