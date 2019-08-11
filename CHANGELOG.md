@@ -3,6 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.3] - 2019-08-11
 ### Added
 - CameraPlane: add range check for vectors array index
 
