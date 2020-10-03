@@ -37,19 +37,19 @@ public class MainDialog extends JFrame {
 
   private void open(File file) {
     try {
-        BufferedImage img = ImageIO.read(file);
-        if (img == null)
-          return;
+      BufferedImage img = ImageIO.read(file);
+      if (img == null)
+        return;
       /**
        * Object containing the shown image and that handles zoom and drag
        */
-        ImageDisplay imageDisplay = new ImageDisplay();
-        boolean pano = ImageMetaDataUtil.isPanorama(file);
-        this.getContentPane().add(imageDisplay);
-        this.setResizable(false);
-        this.setVisible(true);
-        imageDisplay.setImage(img, pano);
-        imageDisplay.requestFocus();
+      boolean pano = ImageMetaDataUtil.isPanorama(file);
+      ImageDisplay imageDisplay = new ImageDisplay();
+      this.getContentPane().add(imageDisplay);
+      this.setResizable(false);
+      this.setVisible(true);
+      imageDisplay.setImage(img, pano);
+      imageDisplay.requestFocus();
     } catch (IOException e) {
       // ignore
     }
