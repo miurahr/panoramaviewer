@@ -26,7 +26,7 @@ Control-Q:  exit
 COPYRIGHT
 ---------
 
-Copyright 2018 Hiroshi Miura
+Copyright (C) 2018,2022 Hiroshi Miura
 
 Copyright (C) 2016 Jorge López Fueyo
 
