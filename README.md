@@ -1,49 +1,15 @@
-360 degree panorama photo viewer
-================================
+# 360 degree panorama photo viewer
 
 The program implement a 3D photo viewer.
 
-MOUSE Operation
-------------
+# Give Up GitHub
 
-- Left button: Zoom control
-- Right button: View point control
-- Middle button: Optional control
+This project has given up GitHub.  ([See Software Freedom Conservancy's *Give Up  GitHub* site for details](https://GiveUpGitHub.org).)
 
-- Click wit left button: 
-- Click with middle button:  zoom out to original level.
-- Drag with left button: zoom in to selected area.
-  (maximum zoom level is 2:1)
-- Drag with right button: move view point.
+You can now find this project at [CodeBerg.org](https://codeberg.org/miurahr/panoramaviewer) instead.
 
+Any use of this project's code by GitHub Copilot, past or present, is done without our permission.  We do not consent to GitHub's use of this project's code in Copilot.
 
-Key Bind
---------
+Join us; you can [give up GitHub](https://GiveUpGitHub.org) too!
 
-Control-Q:  exit
-
-
-COPYRIGHT
----------
-
-Copyright (C) 2018,2022 Hiroshi Miura
-
-Copyright (C) 2016 Jorge López Fueyo
-
-Copyright (C) 2016 Florian Schäfer
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-Reference
----------
-
-Algorithm here is inspired from
-https://github.com/leonardo-ono/Java3DSphereImageViewer
+![Logo of the GiveUpGitHub campaign](https://sfconservancy.org/img/GiveUpGitHub.png)
